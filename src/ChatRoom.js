@@ -59,8 +59,8 @@ export default function ChatRoom({ chatUser, setChatUser }) {
         });
 
         return () => unsubscribe();
-    }, [chatId]);
-
+    }, [chatId, currentUser.uid]);
+    
     // Cuộn xuống cuối mỗi khi có tin mới
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -79,6 +79,10 @@ export default function ChatRoom({ chatUser, setChatUser }) {
         });
 
         setInput('');
+        if (textareaRef.current) {
+            textareaRef.current.style.height = 'auto';
+        }
+
         await updateTypingStatus(false);
     };
 
@@ -91,8 +95,10 @@ export default function ChatRoom({ chatUser, setChatUser }) {
 
     const handleTyping = async (e) => {
         setInput(e.target.value);
-        await updateTypingStatus(true);
+        e.target.style.height = "auto";
+        e.target.style.height = `${e.target.scrollHeight}px`;
 
+        await updateTypingStatus(true);
         clearTimeout(typingTimeout.current);
         typingTimeout.current = setTimeout(() => {
             updateTypingStatus(false);
@@ -142,6 +148,8 @@ export default function ChatRoom({ chatUser, setChatUser }) {
         .reverse()
         .find(msg => msg.senderId === currentUser.uid)?.index;
 
+    const textareaRef = useRef(null);
+
     return (
         <div className="chat-room">
             <button onClick={() => setChatUser(null)} className="back-button">
@@ -156,7 +164,13 @@ export default function ChatRoom({ chatUser, setChatUser }) {
                         className={`message ${msg.senderId === currentUser.uid ? 'sent' : 'received'}`}
                         title={formatTime(msg.timestamp)}
                     >
-                        {msg.text}
+                        {msg.text.split('\n').map((line, idx) => (
+                            <span key={idx}>
+                                {line}
+                                <br />
+                            </span>
+                        ))}
+
                         {msg.senderId === currentUser.uid && (
                             <div className="message-status">
                                 {i === lastSeenIndex ? (
@@ -183,12 +197,13 @@ export default function ChatRoom({ chatUser, setChatUser }) {
             </div>
 
             <div className="input-area">
-                <input
-                    type="text"
+                <textarea
+                    ref={textareaRef}
                     value={input}
                     onChange={handleTyping}
                     onKeyDown={handleKeyPress}
                     placeholder="Nhập tin nhắn..."
+                    className="chat-textarea"
                 />
                 <button className="send-button" onClick={sendMessage} title="Gửi">
                     <FaPaperPlane />
