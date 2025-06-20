@@ -41,14 +41,19 @@ export default function ChatRoom({ chatUser, setChatUser }) {
             }));
             setMessages(msgs);
 
-            // Đánh dấu tin nhắn đã xem nếu là của người khác
+            // Cập nhật trạng thái đã xem hoặc đã nhận
             msgs.forEach(async (msg) => {
+                const msgRef = doc(db, 'chats', chatId, 'messages', msg.id);
                 if (
                     msg.senderId !== currentUser.uid &&
                     msg.status !== 'seen'
                 ) {
-                    const msgRef = doc(db, 'chats', chatId, 'messages', msg.id);
                     await updateDoc(msgRef, { status: 'seen' });
+                } else if (
+                    msg.senderId === currentUser.uid &&
+                    msg.status === 'sent'
+                ) {
+                    await updateDoc(msgRef, { status: 'delivered' });
                 }
             });
         });
@@ -74,7 +79,7 @@ export default function ChatRoom({ chatUser, setChatUser }) {
         });
 
         setInput('');
-        await updateTypingStatus(false); // Tắt typing khi gửi
+        await updateTypingStatus(false);
     };
 
     const handleKeyPress = (e) => {
@@ -115,7 +120,6 @@ export default function ChatRoom({ chatUser, setChatUser }) {
         return () => unsub();
     }, [chatId]);
 
-    // Hiển thị trạng thái typing của người kia
     const isChatUserTyping = typingStatus[chatUser.id];
 
     const formatTime = (timestamp) => {
@@ -132,6 +136,12 @@ export default function ChatRoom({ chatUser, setChatUser }) {
             (msg) => msg.senderId === currentUser.uid && msg.status === 'seen'
         )?.index;
 
+    // Tìm index tin cuối do currentUser gửi
+    const lastSentIndex = [...messages]
+        .map((msg, index) => ({ ...msg, index }))
+        .reverse()
+        .find(msg => msg.senderId === currentUser.uid)?.index;
+
     return (
         <div className="chat-room">
             <button onClick={() => setChatUser(null)} className="back-button">
@@ -143,22 +153,21 @@ export default function ChatRoom({ chatUser, setChatUser }) {
                 {messages.map((msg, i) => (
                     <div
                         key={i}
-                        className={`message ${msg.senderId === currentUser.uid ? 'sent' : 'received'
-                            }`}
+                        className={`message ${msg.senderId === currentUser.uid ? 'sent' : 'received'}`}
                         title={formatTime(msg.timestamp)}
                     >
                         {msg.text}
                         {msg.senderId === currentUser.uid && (
                             <div className="message-status">
-                                {msg.status === 'seen' && i === lastSeenIndex && (
+                                {i === lastSeenIndex ? (
                                     <span className="message-status seen">Đã xem</span>
-                                )}
-                                {msg.status === 'delivered' && (
-                                    <span className="message-status delivered">Đã nhận</span>
-                                )}
-                                {msg.status === 'sent' && (
-                                    <span className="message-status sent">Đã gửi</span>
-                                )}
+                                ) : i === lastSentIndex ? (
+                                    msg.status === 'delivered' ? (
+                                        <span className="message-status delivered">Đã nhận</span>
+                                    ) : (
+                                        <span className="message-status sent">Đã gửi</span>
+                                    )
+                                ) : null}
                             </div>
                         )}
                     </div>
@@ -184,7 +193,6 @@ export default function ChatRoom({ chatUser, setChatUser }) {
                 <button className="send-button" onClick={sendMessage} title="Gửi">
                     <FaPaperPlane />
                 </button>
-
             </div>
         </div>
     );

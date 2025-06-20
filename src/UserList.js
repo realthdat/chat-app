@@ -1,47 +1,55 @@
+// src/UserList.js
 import { useEffect, useState } from 'react';
 import { db, auth } from './firebase';
 import {
   collection,
-  getDocs,
+  onSnapshot,
   query,
-  where
+  orderBy
 } from 'firebase/firestore';
+
+function getChatId(user1, user2) {
+  return [user1.uid, user2.id].sort().join('_');
+}
 
 export default function UserList({ setChatUser }) {
   const [users, setUsers] = useState([]);
+  const [unreadCounts, setUnreadCounts] = useState({});
+
+  const currentUser = auth.currentUser;
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      const querySnapshot = await getDocs(collection(db, "users"));
-      const currentUid = auth.currentUser.uid;
-
-      const userList = querySnapshot.docs
+    const unsub = onSnapshot(collection(db, 'users'), snapshot => {
+      const allUsers = snapshot.docs
         .map(doc => ({ id: doc.id, ...doc.data() }))
-        .filter(user => user.id !== currentUid);
+        .filter(u => u.id !== currentUser.uid);
 
-      // Đếm tin nhắn chưa đọc cho từng user
-      const unreadCounts = {};
-      await Promise.all(userList.map(async (user) => {
-        const chatId = [currentUid, user.id].sort().join('_');
-        const messageQuery = query(
-          collection(db, "chats", chatId, "messages"),
-          where("senderId", "==", user.id),
-          where("status", "!=", "seen")
+      setUsers(allUsers);
+
+      // Lắng nghe từng cuộc trò chuyện cho từng user
+      allUsers.forEach(user => {
+        const chatId = getChatId(currentUser, user);
+        const q = query(
+          collection(db, 'chats', chatId, 'messages'),
+          orderBy('timestamp')
         );
-        const snapshot = await getDocs(messageQuery);
-        unreadCounts[user.id] = snapshot.size;
-      }));
 
-      const usersWithUnread = userList.map(user => ({
-        ...user,
-        unread: unreadCounts[user.id] || 0
-      }));
+        onSnapshot(q, msgSnap => {
+          const unread = msgSnap.docs.filter(doc =>
+            doc.data().senderId === user.id &&
+            doc.data().status !== 'seen'
+          ).length;
 
-      setUsers(usersWithUnread);
-    };
+          setUnreadCounts(prev => ({
+            ...prev,
+            [user.id]: unread
+          }));
+        });
+      });
+    });
 
-    fetchUsers();
-  }, []);
+    return () => unsub();
+  }, [currentUser]);
 
   return (
     <div className="user-list">
@@ -53,9 +61,9 @@ export default function UserList({ setChatUser }) {
           className="user-item"
           onClick={() => setChatUser(user)}
         >
-          <span>{user.displayName}</span>
-          {user.unread > 0 && (
-            <span className="unread-badge">{user.unread}</span>
+          {user.displayName}
+          {unreadCounts[user.id] > 0 && (
+            <span className="unread-badge">{unreadCounts[user.id]}</span>
           )}
         </div>
       ))}

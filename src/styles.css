@@ -62,6 +62,21 @@ body {
   box-sizing: border-box;
 }
 
+/* Toàn bộ layout chiếm đủ chiều cao màn hình */
+.page-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Khu vực nội dung SignIn */
+.signin-container {
+  text-align: center;
+  margin-top: 120px;
+  flex: 1; /* Cho phép phần chính chiếm không gian còn lại */
+}
+
+
 .message-box {
   flex: 1;
   overflow-y: auto;
