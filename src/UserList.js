@@ -1,11 +1,10 @@
-// src/UserList.js
 import { useEffect, useState } from 'react';
 import { db, auth } from './firebase';
 import {
   collection,
   onSnapshot,
   query,
-  orderBy
+  orderBy,
 } from 'firebase/firestore';
 
 function getChatId(user1, user2) {
@@ -15,6 +14,7 @@ function getChatId(user1, user2) {
 export default function UserList({ setChatUser }) {
   const [users, setUsers] = useState([]);
   const [unreadCounts, setUnreadCounts] = useState({});
+  const [lastMessages, setLastMessages] = useState({});
 
   const currentUser = auth.currentUser;
 
@@ -26,18 +26,32 @@ export default function UserList({ setChatUser }) {
 
       setUsers(allUsers);
 
-      // Lắng nghe từng cuộc trò chuyện cho từng user
       allUsers.forEach(user => {
         const chatId = getChatId(currentUser, user);
         const q = query(
           collection(db, 'chats', chatId, 'messages'),
-          orderBy('timestamp')
+          orderBy('timestamp', 'desc')
         );
 
         onSnapshot(q, msgSnap => {
-          const unread = msgSnap.docs.filter(doc =>
-            doc.data().senderId === user.id &&
-            doc.data().status !== 'seen'
+          const msgs = msgSnap.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }));
+
+          // Cập nhật tin nhắn cuối cùng
+          const latest = msgs[0];
+          if (latest) {
+            setLastMessages(prev => ({
+              ...prev,
+              [user.id]: latest.timestamp
+            }));
+          }
+
+          // Cập nhật số lượng chưa đọc
+          const unread = msgs.filter(msg =>
+            msg.senderId === user.id &&
+            msg.status !== 'seen'
           ).length;
 
           setUnreadCounts(prev => ({
@@ -51,11 +65,18 @@ export default function UserList({ setChatUser }) {
     return () => unsub();
   }, [currentUser]);
 
+  // Sắp xếp người dùng theo thời gian tin nhắn mới nhất
+  const sortedUsers = [...users].sort((a, b) => {
+    const timeA = lastMessages[a.id]?.toDate?.() ?? new Date(0);
+    const timeB = lastMessages[b.id]?.toDate?.() ?? new Date(0);
+    return timeB - timeA; // Mới nhất lên đầu
+  });
+
   return (
     <div className="user-list">
       <h3>Chọn người để chat:</h3>
       {users.length === 0 && <p>Không tìm thấy người dùng khác.</p>}
-      {users.map(user => (
+      {sortedUsers.map(user => (
         <div
           key={user.id}
           className="user-item"

@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import { FaArrowLeft, FaPaperPlane } from 'react-icons/fa';
-
 import {
     setDoc,
     doc,
@@ -25,7 +24,8 @@ export default function ChatRoom({ chatUser, setChatUser }) {
     const currentUser = auth.currentUser;
     const chatId = getChatId(currentUser, chatUser);
     const bottomRef = useRef(null);
-    let typingTimeout = useRef(null);
+    const textareaRef = useRef(null);
+    const typingTimeout = useRef(null);
 
     // Lắng nghe tin nhắn
     useEffect(() => {
@@ -41,18 +41,12 @@ export default function ChatRoom({ chatUser, setChatUser }) {
             }));
             setMessages(msgs);
 
-            // Cập nhật trạng thái đã xem hoặc đã nhận
+            // Cập nhật trạng thái
             msgs.forEach(async (msg) => {
                 const msgRef = doc(db, 'chats', chatId, 'messages', msg.id);
-                if (
-                    msg.senderId !== currentUser.uid &&
-                    msg.status !== 'seen'
-                ) {
+                if (msg.senderId !== currentUser.uid && msg.status !== 'seen') {
                     await updateDoc(msgRef, { status: 'seen' });
-                } else if (
-                    msg.senderId === currentUser.uid &&
-                    msg.status === 'sent'
-                ) {
+                } else if (msg.senderId === currentUser.uid && msg.status === 'sent') {
                     await updateDoc(msgRef, { status: 'delivered' });
                 }
             });
@@ -60,8 +54,8 @@ export default function ChatRoom({ chatUser, setChatUser }) {
 
         return () => unsubscribe();
     }, [chatId, currentUser.uid]);
-    
-    // Cuộn xuống cuối mỗi khi có tin mới
+
+    // Auto scroll to bottom
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
@@ -86,16 +80,24 @@ export default function ChatRoom({ chatUser, setChatUser }) {
         await updateTypingStatus(false);
     };
 
+    // Phát hiện Enter
     const handleKeyPress = (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            sendMessage();
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+        if (e.key === 'Enter' && !e.shiftKey) {
+            if (!isMobile) {
+                e.preventDefault();
+                sendMessage();
+            }
         }
     };
 
+    // Đang nhập
     const handleTyping = async (e) => {
         setInput(e.target.value);
-        e.target.style.height = "auto";
+
+        // Auto expand textarea
+        e.target.style.height = 'auto';
         e.target.style.height = `${e.target.scrollHeight}px`;
 
         await updateTypingStatus(true);
@@ -110,7 +112,7 @@ export default function ChatRoom({ chatUser, setChatUser }) {
         await setDoc(typingRef, { typing: status });
     };
 
-    // Lắng nghe trạng thái typing
+    // Lắng nghe trạng thái đang nhập
     useEffect(() => {
         const unsub = onSnapshot(
             collection(db, 'chats', chatId, 'typingStatus'),
@@ -122,7 +124,6 @@ export default function ChatRoom({ chatUser, setChatUser }) {
                 setTypingStatus(status);
             }
         );
-
         return () => unsub();
     }, [chatId]);
 
@@ -134,7 +135,6 @@ export default function ChatRoom({ chatUser, setChatUser }) {
         return date.toLocaleString();
     };
 
-    // Tìm index tin cuối đã xem
     const lastSeenIndex = [...messages]
         .map((msg, index) => ({ ...msg, index }))
         .reverse()
@@ -142,13 +142,10 @@ export default function ChatRoom({ chatUser, setChatUser }) {
             (msg) => msg.senderId === currentUser.uid && msg.status === 'seen'
         )?.index;
 
-    // Tìm index tin cuối do currentUser gửi
     const lastSentIndex = [...messages]
         .map((msg, index) => ({ ...msg, index }))
         .reverse()
         .find(msg => msg.senderId === currentUser.uid)?.index;
-
-    const textareaRef = useRef(null);
 
     return (
         <div className="chat-room">
