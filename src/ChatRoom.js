@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
+import { FaArrowLeft, FaPaperPlane } from 'react-icons/fa';
+
 import {
     setDoc,
     doc,
@@ -133,7 +135,7 @@ export default function ChatRoom({ chatUser, setChatUser }) {
     return (
         <div className="chat-room">
             <button onClick={() => setChatUser(null)} className="back-button">
-                ← Quay lại
+                <FaArrowLeft style={{ marginRight: "6px" }} /> Quay lại
             </button>
             <h3>Chat với {chatUser.displayName}</h3>
 
@@ -179,7 +181,10 @@ export default function ChatRoom({ chatUser, setChatUser }) {
                     onKeyDown={handleKeyPress}
                     placeholder="Nhập tin nhắn..."
                 />
-                <button onClick={sendMessage}>Gửi</button>
+                <button className="send-button" onClick={sendMessage} title="Gửi">
+                    <FaPaperPlane />
+                </button>
+
             </div>
         </div>
     );

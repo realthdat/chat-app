@@ -8,6 +8,7 @@ import SignIn from './SignIn';
 import './styles.css';
 import { doc, setDoc } from 'firebase/firestore';
 
+
 function App() {
   const [user, setUser] = useState(null);
   const [chatUser, setChatUser] = useState(null);
@@ -36,18 +37,22 @@ function App() {
   if (!user) return <SignIn />;
 
   return (
-    <div className="app-container">
-      <div className="header">
-        <h2>Chào, {user.displayName}</h2>
-        <button onClick={() => signOut(auth)} className="logout-button">Đăng xuất</button>
+    <div className="page-container">
+      <div className="app-container">
+        <div className="user-header">
+          <h2 className="user-name">Xin chào, {user.displayName}</h2>
+          <button className="logout-inline" onClick={() => signOut(auth)}>Đăng xuất</button>
+        </div>
+
+
+        {chatUser
+          ? <ChatRoom chatUser={chatUser} setChatUser={setChatUser} />
+          : <UserList setChatUser={setChatUser} />}
       </div>
 
-      {/* Nếu đã chọn người chat → hiển thị ChatRoom */}
-      {chatUser ? (
-        <ChatRoom chatUser={chatUser} setChatUser={setChatUser} />
-      ) : (
-        <UserList setChatUser={setChatUser} />
-      )}
+      <footer className="footer">
+        © {new Date().getFullYear()} Copyright by DatDev
+      </footer>
     </div>
   );
 }
