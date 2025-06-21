@@ -1,6 +1,6 @@
 /* CSS Variables for consistent theming */
 :root {
-  --primary-color: #437cf9;
+  --primary-color: #2563eb;
   --primary-hover: #1d4ed8;
   --secondary-color: #f43f5e;
   --background-color: #f1f5f9;
@@ -71,6 +71,8 @@ body {
   border-radius: var(--border-radius);
   border: 1px solid var(--border-color);
   margin-bottom: 16px;
+  flex-wrap: wrap;
+  /* Cho phép bọc xuống dòng khi cần */
 }
 
 .current-user-avatar {
@@ -225,7 +227,7 @@ body {
   margin-bottom: 16px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 6px;
 }
 
 .message {
@@ -233,6 +235,7 @@ body {
   flex-direction: column;
   align-items: flex-start;
   gap: 4px;
+  margin: 4px 0;
   max-width: 100%;
   animation: fadeIn 0.4s ease-out;
 }
@@ -493,7 +496,7 @@ button:hover {
 }
 
 .back-button:active {
-  transform: #e2e8f0;
+  transform: scale(0.98);
 }
 
 .logout-inline {
@@ -527,7 +530,7 @@ button:hover {
   font-style: italic;
   font-size: 14px;
   color: var(--text-secondary);
-  margin: 8px;
+  margin: 8px 12px;
   animation: blink 1.2s infinite;
   align-self: flex-start;
 }
@@ -545,9 +548,12 @@ button:hover {
 
 /* Animations */
 @keyframes blink {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 0.4;
   }
+
   50% {
     opacity: 1;
   }
@@ -558,6 +564,7 @@ button:hover {
     opacity: 0;
     transform: translateY(10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -577,6 +584,14 @@ button:hover {
   }
 
   .current-user-header {
+    padding: 10px;
+    gap: 8px;
+    flex-direction: row;
+    align-items: center;
+    display: flex;
+  }
+
+  .current-user-avatar {
     width: 36px;
     height: 36px;
   }
@@ -607,7 +622,6 @@ button:hover {
   }
 
   .chat-header {
-    display: flex;
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
@@ -625,9 +639,13 @@ button:hover {
   }
 
   .message {
-    max-width: 100%;
+    margin: 2px 0;
     font-size: 14px;
-    padding: 0px 5px;
+    padding: 6px 10px;
+  }
+
+  .message-box {
+    gap: 4px;
   }
 
   .message-avatar,
@@ -638,7 +656,7 @@ button:hover {
   }
 
   .message-text {
-    padding: 8px 10px;
+    padding: 8px 12px;
     font-size: 14px;
   }
 
@@ -673,7 +691,6 @@ button:hover {
   }
 
   .user-header {
-    display: flex;
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
@@ -700,7 +717,7 @@ button:hover {
 }
 
 .date-separator::before,
-.date-selector::after {
+.date-separator::after {
   content: '';
   position: absolute;
   top: 50%;
@@ -713,6 +730,6 @@ button:hover {
   left: 0;
 }
 
-.date-selector::after {
+.date-separator::after {
   right: 0;
 }
