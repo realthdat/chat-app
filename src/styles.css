@@ -227,14 +227,13 @@ body {
   margin-bottom: 16px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 2px;
 }
 
 .message {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 4px;
   margin: 4px 0;
   max-width: 100%;
   animation: fadeIn 0.4s ease-out;
@@ -633,19 +632,19 @@ button:hover {
 
   .chat-user-avatar,
   .avatar-initials {
-    width: 36px;
-    height: 36px;
+    width: 44px;
+    height: 44px;
     font-size: 14px;
   }
 
   .message {
     margin: 2px 0;
     font-size: 14px;
-    padding: 6px 10px;
+    padding: 0px 10px;
   }
 
   .message-box {
-    gap: 4px;
+    gap: 2px;
   }
 
   .message-avatar,
