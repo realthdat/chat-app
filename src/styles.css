@@ -291,7 +291,6 @@ body {
   word-wrap: break-word;
   box-shadow: var(--shadow-sm);
   max-width: calc(100% - 60px);
-  /* Tinh chỉnh để tránh lồi */
   box-sizing: border-box;
 }
 
@@ -590,9 +589,9 @@ button:hover {
 /* Responsive */
 @media (max-width: 600px) {
   .app-container {
-    width: 94%;
+    width: 95%;
     padding: 16px;
-    margin-top: 20px;
+    margin-top: 10px;
   }
 
   .user-list {
@@ -600,8 +599,8 @@ button:hover {
   }
 
   .current-user-avatar {
-    width: 48px;
-    height: 48px;
+    width: 36px;
+    height: 36px;
   }
 
   .user-item {
@@ -620,13 +619,13 @@ button:hover {
 
   .unread-badge {
     font-size: 11px;
-    min-width: 18px;
-    height: 18px;
+    width: 10px;
+    height: 16px;
   }
 
   .chat-room {
-    height: 70vh;
-    padding: 12px;
+    height: 80vh;
+    padding: 7px;
   }
 
   .chat-header {
@@ -643,9 +642,9 @@ button:hover {
   }
 
   .message {
-    max-width: 75%;
+    max-width: 100%;
     font-size: 14px;
-    padding: 8px 12px;
+    padding: 6px 10px;
   }
 
   .message-avatar,
@@ -666,8 +665,8 @@ button:hover {
   }
 
   .send-button {
-    width: 36px;
-    height: 36px;
+    width: 50px;
+    height: 50px;
   }
 
   .signin-container {
