@@ -619,8 +619,8 @@ button:hover {
 
   .unread-badge {
     font-size: 11px;
-    width: 10px;
-    height: 16px;
+    width: 8px;
+    height: 15px;
   }
 
   .chat-room {
@@ -632,6 +632,10 @@ button:hover {
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
+  }
+
+  .chat-user-info h3 {
+    font-size: 15px;
   }
 
   .chat-user-avatar,
