@@ -29,7 +29,6 @@ export default function ChatRoom({ chatUser, setChatUser }) {
   const bottomRef = useRef(null);
   const textareaRef = useRef(null);
   const typingTimeout = useRef(null);
-  // const defaultAvatar = '/default-avatar.png'; // Ảnh mặc định cục bộ
 
   // Utility function to check if timestamp is valid
   const isValidTimestamp = (timestamp) => {

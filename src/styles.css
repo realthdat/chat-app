@@ -1,38 +1,24 @@
 /* CSS Variables for consistent theming */
 :root {
-  --primary-color: #2563eb;
-  /* Vibrant blue for primary actions */
+  --primary-color: #437cf9;
   --primary-hover: #1d4ed8;
-  /* Slightly darker for hover */
   --secondary-color: #f43f5e;
-  /* Modern red for secondary actions */
   --background-color: #f1f5f9;
-  /* Light gradient background */
   --surface-color: #ffffff;
-  /* White for cards and surfaces */
   --text-primary: #1e293b;
-  /* Darker text for better contrast */
   --text-secondary: #64748b;
-  /* Softer gray for secondary text */
   --border-color: #e2e8f0;
-  /* Subtle border color */
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
-  /* Lighter shadow */
   --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.05), 0 2px 4px rgba(0, 0, 0, 0.03);
-  /* Medium shadow for depth */
   --border-radius: 12px;
-  /* Slightly larger radius for modern look */
   --transition: all 0.3s ease-in-out;
-  /* Smoother transitions */
   --font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  /* Modern font-family */
 }
 
 /* Global reset and typography */
 body {
   font-family: var(--font-family);
   background: linear-gradient(135deg, #f1f5f9 0%, #e0e7ff 100%);
-  /* Gradient background */
   margin: 0;
   padding: 0;
   color: var(--text-primary);
@@ -54,7 +40,6 @@ body {
   flex: 1;
   width: 90%;
   max-width: 1000px;
-  /* Slightly wider for better layout */
   margin: 32px auto;
   background: var(--surface-color);
   border-radius: var(--border-radius);
@@ -248,7 +233,6 @@ body {
   flex-direction: column;
   align-items: flex-start;
   gap: 4px;
-  margin: 8px 0;
   max-width: 100%;
   animation: fadeIn 0.4s ease-out;
 }
@@ -292,11 +276,11 @@ body {
   box-shadow: var(--shadow-sm);
   max-width: calc(100% - 60px);
   box-sizing: border-box;
+  position: relative;
 }
 
 .message.sent .message-text {
   background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-  /* Gradient cho tin nhắn gửi */
 }
 
 .message.received .message-text {
@@ -308,12 +292,12 @@ body {
   color: var(--text-secondary);
   margin-top: 4px;
   text-align: right;
-  opacity: 0;
-  transition: opacity var(--transition);
+  display: none;
 }
 
-.message:hover .message-meta {
-  opacity: 0.9;
+.message:hover .message-meta,
+.message-text:active .message-meta {
+  display: block;
 }
 
 .message-status {
@@ -345,12 +329,11 @@ body {
   font-size: 11px;
 }
 
-/* Skeleton loading for avatars (không nhấp nháy) */
+/* Skeleton loading for avatars */
 .chat-user-avatar:empty,
 .message-avatar:empty,
 .seen-avatar:empty {
   background: #e2e8f0;
-  /* Màu xám nhạt cố định */
 }
 
 /* Input Area */
@@ -471,7 +454,6 @@ body {
   height: 24px;
 }
 
-
 /* Buttons */
 button {
   padding: 10px 18px;
@@ -511,7 +493,7 @@ button:hover {
 }
 
 .back-button:active {
-  transform: scale(0.98);
+  transform: #e2e8f0;
 }
 
 .logout-inline {
@@ -545,7 +527,7 @@ button:hover {
   font-style: italic;
   font-size: 14px;
   color: var(--text-secondary);
-  margin: 8px 12px;
+  margin: 8px;
   animation: blink 1.2s infinite;
   align-self: flex-start;
 }
@@ -563,12 +545,9 @@ button:hover {
 
 /* Animations */
 @keyframes blink {
-
-  0%,
-  100% {
+  0%, 100% {
     opacity: 0.4;
   }
-
   50% {
     opacity: 1;
   }
@@ -579,7 +558,6 @@ button:hover {
     opacity: 0;
     transform: translateY(10px);
   }
-
   to {
     opacity: 1;
     transform: translateY(0);
@@ -598,7 +576,7 @@ button:hover {
     padding: 12px;
   }
 
-  .current-user-avatar {
+  .current-user-header {
     width: 36px;
     height: 36px;
   }
@@ -629,6 +607,7 @@ button:hover {
   }
 
   .chat-header {
+    display: flex;
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
@@ -648,7 +627,7 @@ button:hover {
   .message {
     max-width: 100%;
     font-size: 14px;
-    padding: 6px 10px;
+    padding: 0px 5px;
   }
 
   .message-avatar,
@@ -659,7 +638,7 @@ button:hover {
   }
 
   .message-text {
-    padding: 8px 12px;
+    padding: 8px 10px;
     font-size: 14px;
   }
 
@@ -694,6 +673,7 @@ button:hover {
   }
 
   .user-header {
+    display: flex;
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
@@ -720,8 +700,8 @@ button:hover {
 }
 
 .date-separator::before,
-.date-separator::after {
-  content: "";
+.date-selector::after {
+  content: '';
   position: absolute;
   top: 50%;
   width: 35%;
@@ -733,6 +713,6 @@ button:hover {
   left: 0;
 }
 
-.date-separator::after {
+.date-selector::after {
   right: 0;
 }
