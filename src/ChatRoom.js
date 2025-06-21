@@ -29,7 +29,12 @@ export default function ChatRoom({ chatUser, setChatUser }) {
   const bottomRef = useRef(null);
   const textareaRef = useRef(null);
   const typingTimeout = useRef(null);
-  const defaultAvatar = '/default-avatar.png'; // Ảnh mặc định cục bộ
+  // const defaultAvatar = '/default-avatar.png'; // Ảnh mặc định cục bộ
+
+  // Utility function to check if timestamp is valid
+  const isValidTimestamp = (timestamp) => {
+    return timestamp && typeof timestamp.toDate === 'function';
+  };
 
   // Đồng bộ photoURL của currentUser với Firestore
   useEffect(() => {
@@ -71,10 +76,16 @@ export default function ChatRoom({ chatUser, setChatUser }) {
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const msgs = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
+      const msgs = snapshot.docs.map((doc) => {
+        const data = doc.data();
+        if (!data.timestamp) {
+          console.warn(`Message ${doc.id} missing timestamp:`, data);
+        }
+        return {
+          id: doc.id,
+          ...data,
+        };
+      });
       setMessages(msgs);
 
       // Cập nhật trạng thái tin nhắn
@@ -100,14 +111,18 @@ export default function ChatRoom({ chatUser, setChatUser }) {
   const sendMessage = async () => {
     if (!input.trim()) return;
 
-    await addDoc(collection(db, 'chats', chatId, 'messages'), {
+    const messageData = {
       text: input,
       senderId: currentUser.uid,
       senderName: currentUser.displayName || 'Ẩn danh',
       senderPhotoURL: currentUser.photoURL || null,
       timestamp: serverTimestamp(),
       status: 'sent',
-    });
+    };
+
+    console.log('Sending message:', messageData);
+
+    await addDoc(collection(db, 'chats', chatId, 'messages'), messageData);
 
     setInput('');
     if (textareaRef.current) {
@@ -167,7 +182,7 @@ export default function ChatRoom({ chatUser, setChatUser }) {
   const isChatUserTyping = typingStatus[chatUser.id];
 
   const formatTime = (timestamp) => {
-    if (!timestamp) return '';
+    if (!isValidTimestamp(timestamp)) return '';
     const date = timestamp.toDate();
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
@@ -192,6 +207,9 @@ export default function ChatRoom({ chatUser, setChatUser }) {
     .find(msg => msg.senderId === currentUser.uid)?.index;
 
   const isSameDay = (date1, date2) => {
+    if (!(date1 instanceof Date) || !(date2 instanceof Date)) {
+      return false;
+    }
     return (
       date1.getFullYear() === date2.getFullYear() &&
       date1.getMonth() === date2.getMonth() &&
@@ -225,13 +243,18 @@ export default function ChatRoom({ chatUser, setChatUser }) {
 
       <div className="message-box">
         {messages.map((msg, i) => {
-          const msgDate = msg.timestamp?.toDate?.();
-          const prevMsgDate = i > 0 ? messages[i - 1]?.timestamp?.toDate?.() : null;
-          const showDate = !prevMsgDate || !isSameDay(msgDate, prevMsgDate);
+          const msgDate = isValidTimestamp(msg.timestamp)
+            ? msg.timestamp.toDate()
+            : null;
+          const prevMsgDate =
+            i > 0 && isValidTimestamp(messages[i - 1]?.timestamp)
+              ? messages[i - 1].timestamp.toDate()
+              : null;
+          const showDate = !prevMsgDate || !msgDate || !isSameDay(msgDate, prevMsgDate);
 
           return (
             <div key={msg.id || i}>
-              {showDate && (
+              {showDate && msgDate && (
                 <div className="date-separator">
                   {msgDate.toLocaleDateString('vi-VN', {
                     weekday: 'short',
@@ -244,7 +267,7 @@ export default function ChatRoom({ chatUser, setChatUser }) {
 
               <div
                 className={`message ${msg.senderId === currentUser.uid ? 'sent' : 'received'}`}
-                title={formatTime(msg.timestamp)}
+                title={msgDate ? formatTime(msg.timestamp) : 'No timestamp'}
               >
                 <div className="message-content">
                   {msg.senderId === currentUser.uid ? (
@@ -283,7 +306,9 @@ export default function ChatRoom({ chatUser, setChatUser }) {
                         <br />
                       </span>
                     ))}
-                    <div className="message-meta">{formatTime(msg.timestamp)}</div>
+                    <div className="message-meta">
+                      {msgDate ? formatTime(msg.timestamp) : 'No time'}
+                    </div>
                   </div>
                 </div>
 
