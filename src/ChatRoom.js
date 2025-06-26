@@ -24,6 +24,7 @@ export default function ChatRoom({ chatUser, setChatUser }) {
   const [input, setInput] = useState('');
   const [typingStatus, setTypingStatus] = useState({});
   const [imageErrors, setImageErrors] = useState({});
+  const [isOnline, setIsOnline] = useState(false); // Thêm state để lưu trạng thái online
   const currentUser = auth.currentUser;
   const chatId = getChatId(currentUser, chatUser);
   const bottomRef = useRef(null);
@@ -53,6 +54,20 @@ export default function ChatRoom({ chatUser, setChatUser }) {
     syncUserPhotoURL();
   }, [currentUser]);
 
+  // Lắng nghe trạng thái online của chatUser
+  useEffect(() => {
+    if (!chatUser?.id) return;
+
+    const userDocRef = doc(db, 'users', chatUser.id);
+    const unsubscribe = onSnapshot(userDocRef, (doc) => {
+      if (doc.exists()) {
+        setIsOnline(doc.data().online || false);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [chatUser?.id]);
+
   // Debug: Log thông tin chi tiết
   useEffect(() => {
     console.log('Current User:', {
@@ -64,8 +79,9 @@ export default function ChatRoom({ chatUser, setChatUser }) {
       id: chatUser?.id,
       displayName: chatUser?.displayName,
       photoURL: chatUser?.photoURL || 'Không có photoURL',
+      online: isOnline,
     });
-  }, [currentUser, chatUser]);
+  }, [currentUser, chatUser, isOnline]);
 
   // Lắng nghe tin nhắn
   useEffect(() => {
@@ -224,16 +240,22 @@ export default function ChatRoom({ chatUser, setChatUser }) {
         </button>
         <div className="chat-user-info">
           {!imageErrors['chatUser'] && chatUser.photoURL ? (
-            <img
-              src={chatUser.photoURL}
-              alt={`${chatUser.displayName}'s avatar`}
-              className="chat-user-avatar"
-              loading="lazy"
-              onError={() => handleImageError('chatUser', chatUser.photoURL)}
-            />
+            <div className="avatar-container">
+              <img
+                src={chatUser.photoURL}
+                alt={`${chatUser.displayName}'s avatar`}
+                className="chat-user-avatar"
+                loading="lazy"
+                onError={() => handleImageError('chatUser', chatUser.photoURL)}
+              />
+              <span className={`status-indicator ${isOnline ? 'online' : 'offline'}`}></span>
+            </div>
           ) : (
-            <div className="avatar-initials">
-              {getInitials(chatUser.displayName)}
+            <div className="avatar-container">
+              <div className="avatar-initials">
+                {getInitials(chatUser.displayName)}
+              </div>
+              <span className={`status-indicator ${isOnline ? 'online' : 'offline'}`}></span>
             </div>
           )}
           <h3>{chatUser.displayName}</h3>
@@ -252,7 +274,7 @@ export default function ChatRoom({ chatUser, setChatUser }) {
           const showDate = !prevMsgDate || !msgDate || !isSameDay(msgDate, prevMsgDate);
 
           return (
-            <div key={msg.id || i}>
+            <div stone key={msg.id || i}>
               {showDate && msgDate && (
                 <div className="date-separator">
                   {msgDate.toLocaleDateString('vi-VN', {

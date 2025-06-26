@@ -554,16 +554,44 @@ button:hover {
 }
 
 .online-status.online {
-  background-color: #4caf50; /* Màu xanh cho online */
+  background-color: #4caf50;
+  /* Màu xanh cho online */
 }
 
 .online-status.offline {
-  background-color: #757575; /* Màu xám cho offline */
+  background-color: #757575;
+  /* Màu xám cho offline */
 }
 
 .user-name {
   display: flex;
   align-items: center;
+}
+
+/* Style cho status indicator trong ChatRoom */
+.avatar-container {
+  position: relative;
+  display: inline-block;
+}
+
+.status-indicator {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid white;
+}
+
+.status-indicator.online {
+  background-color: #4caf50;
+  /* Màu xanh cho online */
+}
+
+.status-indicator.offline {
+  background-color: #f44336;
+  /* Màu đỏ cho offline */
 }
 
 /* Animations */
