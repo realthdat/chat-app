@@ -585,6 +585,10 @@ button:hover {
   margin-top: 2px;
 }
 
+.last-seen.online {
+  color: #2bc43f; 
+}
+
 /* Animations */
 @keyframes blink {
 
