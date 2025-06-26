@@ -552,23 +552,22 @@ button:hover {
 
 .status-indicator {
   position: absolute;
-  bottom: 8px;
+  bottom: 6px;
   right: 0px;
   width: 13px;
   height: 13px;
   border-radius: 50%;
-  border: 1px solid white; 
+  border: 1.5px solid white; 
 }
 
 .status-indicator.online {
-  background-color: #4caf50; /* Màu xanh cho online */
+  background-color: #40cc52; 
 }
 
 .status-indicator.offline {
-  background-color: #f44336; /* Màu đỏ cho offline */
+  background-color: #c8c8c8; 
 }
 
-/* Style cho last seen trong ChatRoom */
 .chat-user-details {
   display: flex;
   flex-direction: column;
