@@ -1,4 +1,3 @@
-// src/App.js
 import { useEffect, useState } from 'react';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth, db } from './firebase';
@@ -8,6 +7,16 @@ import SignIn from './SignIn';
 import './styles.css';
 import { doc, setDoc } from 'firebase/firestore';
 
+async function updateOnlineStatus(userId, status) {
+  try {
+    await setDoc(doc(db, 'users', userId), {
+      online: status,
+      lastSeen: status ? null : new Date(),
+    }, { merge: true });
+  } catch (error) {
+    console.error('Error updating online status:', error);
+  }
+}
 
 function App() {
   const [user, setUser] = useState(null);
@@ -20,9 +29,12 @@ function App() {
         setUser(user);
 
         // Lưu thông tin user vào Firestore nếu chưa có
-        await setDoc(doc(db, "users", user.uid), {
-          displayName: user.displayName,
-          email: user.email,
+        await setDoc(doc(db, 'users', user.uid), {
+          displayName: user.displayName || 'Anonymous',
+          email: user.email || null,
+          id: user.uid,
+          lastLogin: new Date(),
+          online: true, // Thêm trạng thái online
         }, { merge: true });
       } else {
         setUser(null);
@@ -33,6 +45,19 @@ function App() {
     return () => unsubscribe();
   }, []);
 
+  // Xử lý đăng xuất
+  const handleSignOut = async () => {
+    try {
+      if (user) {
+        await updateOnlineStatus(user.uid, false);
+        await signOut(auth);
+        console.log('User signed out and status set to offline');
+      }
+    } catch (error) {
+      console.error('Error during sign out:', error);
+    }
+  };
+
   // Nếu chưa đăng nhập → hiện màn hình đăng nhập
   if (!user) return <SignIn />;
 
@@ -41,9 +66,8 @@ function App() {
       <div className="app-container">
         <div className="user-header">
           <h2 className="user-name">Xin chào, {user.displayName}</h2>
-          <button className="logout-inline" onClick={() => signOut(auth)}>Đăng xuất</button>
+          <button className="logout-inline" onClick={handleSignOut}>Đăng xuất</button>
         </div>
-
 
         {chatUser
           ? <ChatRoom chatUser={chatUser} setChatUser={setChatUser} />

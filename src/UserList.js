@@ -24,7 +24,7 @@ async function saveUserToFirestore(user) {
       email: user.email || null,
       id: user.uid,
       lastLogin: new Date(),
-      online: true, // Cập nhật trạng thái online
+      online: true,
     }, { merge: true });
   } catch (error) {
     console.error('Error saving user to Firestore:', error);

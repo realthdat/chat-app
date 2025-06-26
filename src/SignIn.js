@@ -23,14 +23,16 @@ export default function SignIn() {
         photoURL: user.photoURL || null,
         email: user.email || null,
         id: user.uid,
-        lastLogin: new Date()
+        lastLogin: new Date(),
+        online: true 
       }, { merge: true });
 
       console.log('Đã lưu dữ liệu người dùng vào Firestore:', {
         uid: user.uid,
         displayName: user.displayName,
         photoURL: user.photoURL,
-        email: user.email
+        email: user.email,
+        online: true
       });
     } catch (e) {
       console.error('Lỗi đăng nhập:', e.message);
