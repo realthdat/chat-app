@@ -238,7 +238,7 @@ export default function UserList({ setChatUser }) {
             <div className="user-name">
               {user.displayName || 'Anonymous'}
               <span className={`online-status ${user.online ? 'online' : 'offline'}`}>
-                {user.online ? 'Online' : `Offline (${formatLastSeen(user.lastSeen)})`}
+                {user.online ? 'Online' : `Offline ${formatLastSeen(user.lastSeen)}`}
               </span>
             </div>
             {lastMessages[user.id] && (
