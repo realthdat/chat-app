@@ -24,9 +24,22 @@ async function saveUserToFirestore(user) {
       email: user.email || null,
       id: user.uid,
       lastLogin: new Date(),
+      online: true, // Cập nhật trạng thái online
     }, { merge: true });
   } catch (error) {
     console.error('Error saving user to Firestore:', error);
+  }
+}
+
+// Function to update online status
+async function updateOnlineStatus(userId, status) {
+  try {
+    await setDoc(doc(db, 'users', userId), {
+      online: status,
+      lastSeen: status ? null : new Date(),
+    }, { merge: true });
+  } catch (error) {
+    console.error('Error updating online status:', error);
   }
 }
 
@@ -36,9 +49,9 @@ export default function UserList({ setChatUser }) {
   const [lastMessages, setLastMessages] = useState({});
   const [imageErrors, setImageErrors] = useState({});
   const currentUser = auth.currentUser;
-  const defaultAvatar = '/default-avatar.png'; // Ảnh mặc định cục bộ
+  const defaultAvatar = '/default-avatar.png';
 
-  // Đồng bộ photoURL của currentUser với Firestore
+  // Đồng bộ photoURL và trạng thái online của currentUser
   useEffect(() => {
     if (!currentUser) return;
 
@@ -49,11 +62,27 @@ export default function UserList({ setChatUser }) {
         await setDoc(userDocRef, {
           photoURL: currentUser.photoURL || null,
           lastLogin: new Date(),
+          online: true,
         }, { merge: true });
-        console.log('Đã đồng bộ photoURL cho currentUser');
+        console.log('Đã đồng bộ photoURL và trạng thái online cho currentUser');
       }
     };
     syncUserPhotoURL();
+
+    // Cập nhật trạng thái online khi người dùng đăng nhập
+    updateOnlineStatus(currentUser.uid, true);
+
+    // Xử lý sự kiện trước khi đóng trình duyệt
+    const handleBeforeUnload = () => {
+      updateOnlineStatus(currentUser.uid, false);
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    // Cleanup: Đặt trạng thái offline khi component unmount
+    return () => {
+      updateOnlineStatus(currentUser.uid, false);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
   }, [currentUser]);
 
   // Debug: Log thông tin currentUser
@@ -81,10 +110,12 @@ export default function UserList({ setChatUser }) {
       setUsers(allUsers);
 
       allUsers.forEach(user => {
-        console.log('User photoURL:', {
+        console.log('User info:', {
           id: user.id,
           displayName: user.displayName,
           photoURL: user.photoURL || 'Không có photoURL',
+          online: user.online || false,
+          lastSeen: user.lastSeen ? user.lastSeen.toDate() : null,
         });
 
         const chatId = getChatId(currentUser, user);
@@ -125,8 +156,12 @@ export default function UserList({ setChatUser }) {
     return () => unsub();
   }, [currentUser]);
 
-  // Sort users by last message timestamp
+  // Sort users by online status and last message timestamp
   const sortedUsers = [...users].sort((a, b) => {
+    // Ưu tiên người online lên đầu
+    if (a.online && !b.online) return -1;
+    if (!a.online && b.online) return 1;
+    // Nếu cùng trạng thái, sắp xếp theo thời gian tin nhắn cuối
     const timeA = lastMessages[a.id]?.timestamp?.toDate?.() ?? new Date(0);
     const timeB = lastMessages[b.id]?.timestamp?.toDate?.() ?? new Date(0);
     return timeB - timeA;
@@ -137,6 +172,24 @@ export default function UserList({ setChatUser }) {
   const handleImageError = (key, url) => {
     console.log(`Lỗi tải ảnh: ${url} cho ${key}`);
     setImageErrors((prev) => ({ ...prev, [key]: true }));
+  };
+
+  const formatLastSeen = (timestamp) => {
+    if (!timestamp || typeof timestamp.toDate !== 'function') return '';
+    const date = timestamp.toDate();
+    const now = new Date();
+    const diff = now - date;
+    const minutes = Math.floor(diff / 1000 / 60);
+
+    if (minutes < 1) return 'Vừa mới đây';
+    if (minutes < 60) return `${minutes} phút trước`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours} giờ trước`;
+    return date.toLocaleDateString('vi-VN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
   };
 
   return (
@@ -157,6 +210,7 @@ export default function UserList({ setChatUser }) {
             </div>
           )}
           <h3>{currentUser.displayName || 'User'}</h3>
+          <span className="online-status online">Online</span>
         </div>
       )}
       <div className="user-list-title">Conversations</div>
@@ -181,7 +235,12 @@ export default function UserList({ setChatUser }) {
             </div>
           )}
           <div className="user-info">
-            <div className="user-name">{user.displayName || 'Anonymous'}</div>
+            <div className="user-name">
+              {user.displayName || 'Anonymous'}
+              <span className={`online-status ${user.online ? 'online' : 'offline'}`}>
+                {user.online ? 'Online' : `Offline (${formatLastSeen(user.lastSeen)})`}
+              </span>
+            </div>
             {lastMessages[user.id] && (
               <div className="last-message">
                 {lastMessages[user.id].text?.substring(0, 30) + (lastMessages[user.id].text?.length > 30 ? '...' : '')}

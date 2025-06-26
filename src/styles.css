@@ -545,6 +545,27 @@ button:hover {
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
+.online-status {
+  font-size: 0.8em;
+  margin-left: 8px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  color: white;
+}
+
+.online-status.online {
+  background-color: #4caf50; /* Màu xanh cho online */
+}
+
+.online-status.offline {
+  background-color: #757575; /* Màu xám cho offline */
+}
+
+.user-name {
+  display: flex;
+  align-items: center;
+}
+
 /* Animations */
 @keyframes blink {
 
