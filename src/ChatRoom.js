@@ -25,6 +25,7 @@ export default function ChatRoom({ chatUser, setChatUser }) {
   const [typingStatus, setTypingStatus] = useState({});
   const [imageErrors, setImageErrors] = useState({});
   const [lastSeen, setLastSeen] = useState(null);
+  const [isOnline, setIsOnline] = useState(false); 
   const currentUser = auth.currentUser;
   const chatId = getChatId(currentUser, chatUser);
   const bottomRef = useRef(null);
@@ -37,8 +38,9 @@ export default function ChatRoom({ chatUser, setChatUser }) {
     return timestamp && typeof timestamp.toDate === 'function';
   };
 
-  // Format last seen time
-  const formatLastSeen = (timestamp) => {
+  // Format last seen time or online status
+  const formatLastSeen = (timestamp, online) => {
+    if (online) return 'Đang hoạt động';
     if (!timestamp || typeof timestamp.toDate !== 'function') return 'Không rõ lần cuối truy cập';
     const date = timestamp.toDate();
     const now = new Date();
@@ -74,7 +76,7 @@ export default function ChatRoom({ chatUser, setChatUser }) {
     syncUserPhotoURL();
   }, [currentUser]);
 
-  // Lắng nghe trạng thái lastSeen của chatUser
+  // Lắng nghe trạng thái lastSeen và online của chatUser
   useEffect(() => {
     if (!chatUser?.id) return;
 
@@ -82,6 +84,7 @@ export default function ChatRoom({ chatUser, setChatUser }) {
     const unsubscribe = onSnapshot(userDocRef, (doc) => {
       if (doc.exists()) {
         setLastSeen(doc.data().lastSeen || null);
+        setIsOnline(doc.data().online || false); // Cập nhật trạng thái online
       }
     });
 
@@ -100,8 +103,9 @@ export default function ChatRoom({ chatUser, setChatUser }) {
       displayName: chatUser?.displayName,
       photoURL: chatUser?.photoURL || 'Không có photoURL',
       lastSeen: lastSeen ? lastSeen.toDate() : 'Không có lastSeen',
+      online: isOnline,
     });
-  }, [currentUser, chatUser, lastSeen]);
+  }, [currentUser, chatUser, lastSeen, isOnline]);
 
   // Lắng nghe tin nhắn
   useEffect(() => {
@@ -276,7 +280,7 @@ export default function ChatRoom({ chatUser, setChatUser }) {
           )}
           <div className="chat-user-details">
             <h3>{chatUser.displayName}</h3>
-            <span className="last-seen">{formatLastSeen(lastSeen)}</span>
+            <span className="last-seen">{formatLastSeen(lastSeen, isOnline)}</span>
           </div>
         </div>
       </div>

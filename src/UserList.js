@@ -78,9 +78,8 @@ export default function UserList({ setChatUser }) {
     };
     window.addEventListener('beforeunload', handleBeforeUnload);
 
-    // Cleanup: Đặt trạng thái offline khi component unmount
+    // Cleanup: Chỉ xóa sự kiện beforeunload
     return () => {
-      updateOnlineStatus(currentUser.uid, false);
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, [currentUser]);
