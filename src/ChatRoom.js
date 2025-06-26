@@ -24,16 +24,36 @@ export default function ChatRoom({ chatUser, setChatUser }) {
   const [input, setInput] = useState('');
   const [typingStatus, setTypingStatus] = useState({});
   const [imageErrors, setImageErrors] = useState({});
-  const [isOnline, setIsOnline] = useState(false); // Thêm state để lưu trạng thái online
+  const [lastSeen, setLastSeen] = useState(null);
   const currentUser = auth.currentUser;
   const chatId = getChatId(currentUser, chatUser);
   const bottomRef = useRef(null);
   const textareaRef = useRef(null);
   const typingTimeout = useRef(null);
+  const defaultAvatar = '/default-avatar.png';
 
   // Utility function to check if timestamp is valid
   const isValidTimestamp = (timestamp) => {
     return timestamp && typeof timestamp.toDate === 'function';
+  };
+
+  // Format last seen time
+  const formatLastSeen = (timestamp) => {
+    if (!timestamp || typeof timestamp.toDate !== 'function') return 'Không rõ lần cuối truy cập';
+    const date = timestamp.toDate();
+    const now = new Date();
+    const diff = now - date;
+    const minutes = Math.floor(diff / 1000 / 60);
+
+    if (minutes < 1) return 'Vừa mới truy cập';
+    if (minutes < 60) return `Hoạt động ${minutes} phút trước`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `Hoạt động ${hours} giờ trước`;
+    return `Hoạt động ${date.toLocaleDateString('vi-VN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    })}`;
   };
 
   // Đồng bộ photoURL của currentUser với Firestore
@@ -54,14 +74,14 @@ export default function ChatRoom({ chatUser, setChatUser }) {
     syncUserPhotoURL();
   }, [currentUser]);
 
-  // Lắng nghe trạng thái online của chatUser
+  // Lắng nghe trạng thái lastSeen của chatUser
   useEffect(() => {
     if (!chatUser?.id) return;
 
     const userDocRef = doc(db, 'users', chatUser.id);
     const unsubscribe = onSnapshot(userDocRef, (doc) => {
       if (doc.exists()) {
-        setIsOnline(doc.data().online || false);
+        setLastSeen(doc.data().lastSeen || null);
       }
     });
 
@@ -79,9 +99,9 @@ export default function ChatRoom({ chatUser, setChatUser }) {
       id: chatUser?.id,
       displayName: chatUser?.displayName,
       photoURL: chatUser?.photoURL || 'Không có photoURL',
-      online: isOnline,
+      lastSeen: lastSeen ? lastSeen.toDate() : 'Không có lastSeen',
     });
-  }, [currentUser, chatUser, isOnline]);
+  }, [currentUser, chatUser, lastSeen]);
 
   // Lắng nghe tin nhắn
   useEffect(() => {
@@ -202,8 +222,6 @@ export default function ChatRoom({ chatUser, setChatUser }) {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
-  const getInitials = (name) => name ? name.charAt(0).toUpperCase() : 'A';
-
   const handleImageError = (key, url) => {
     console.log(`Lỗi tải ảnh: ${url} cho ${key}`);
     setImageErrors((prev) => ({ ...prev, [key]: true }));
@@ -240,25 +258,26 @@ export default function ChatRoom({ chatUser, setChatUser }) {
         </button>
         <div className="chat-user-info">
           {!imageErrors['chatUser'] && chatUser.photoURL ? (
-            <div className="avatar-container">
-              <img
-                src={chatUser.photoURL}
-                alt={`${chatUser.displayName}'s avatar`}
-                className="chat-user-avatar"
-                loading="lazy"
-                onError={() => handleImageError('chatUser', chatUser.photoURL)}
-              />
-              <span className={`status-indicator ${isOnline ? 'online' : 'offline'}`}></span>
-            </div>
+            <img
+              src={chatUser.photoURL}
+              alt={`${chatUser.displayName}'s avatar`}
+              className="chat-user-avatar"
+              loading="lazy"
+              onError={() => handleImageError('chatUser', chatUser.photoURL)}
+            />
           ) : (
-            <div className="avatar-container">
-              <div className="avatar-initials">
-                {getInitials(chatUser.displayName)}
-              </div>
-              <span className={`status-indicator ${isOnline ? 'online' : 'offline'}`}></span>
-            </div>
+            <img
+              src={defaultAvatar}
+              alt={`${chatUser.displayName}'s avatar`}
+              className="chat-user-avatar"
+              loading="lazy"
+              onError={() => handleImageError('chatUser', defaultAvatar)}
+            />
           )}
-          <h3>{chatUser.displayName}</h3>
+          <div className="chat-user-details">
+            <h3>{chatUser.displayName}</h3>
+            <span className="last-seen">{formatLastSeen(lastSeen)}</span>
+          </div>
         </div>
       </div>
 
@@ -274,7 +293,7 @@ export default function ChatRoom({ chatUser, setChatUser }) {
           const showDate = !prevMsgDate || !msgDate || !isSameDay(msgDate, prevMsgDate);
 
           return (
-            <div stone key={msg.id || i}>
+            <div key={msg.id || i}>
               {showDate && msgDate && (
                 <div className="date-separator">
                   {msgDate.toLocaleDateString('vi-VN', {
@@ -301,9 +320,13 @@ export default function ChatRoom({ chatUser, setChatUser }) {
                         onError={() => handleImageError('sender_' + msg.id, msg.senderPhotoURL)}
                       />
                     ) : (
-                      <div className="message-avatar-initials">
-                        {getInitials(msg.senderName)}
-                      </div>
+                      <img
+                        src={defaultAvatar}
+                        alt={`${msg.senderName}'s avatar`}
+                        className="message-avatar"
+                        loading="lazy"
+                        onError={() => handleImageError('sender_' + msg.id, defaultAvatar)}
+                      />
                     )
                   ) : (
                     !imageErrors['receiver_' + msg.id] && chatUser.photoURL ? (
@@ -315,9 +338,13 @@ export default function ChatRoom({ chatUser, setChatUser }) {
                         onError={() => handleImageError('receiver_' + msg.id, chatUser.photoURL)}
                       />
                     ) : (
-                      <div className="message-avatar-initials">
-                        {getInitials(chatUser.displayName)}
-                      </div>
+                      <img
+                        src={defaultAvatar}
+                        alt={`${chatUser.displayName}'s avatar`}
+                        className="message-avatar"
+                        loading="lazy"
+                        onError={() => handleImageError('receiver_' + msg.id, defaultAvatar)}
+                      />
                     )
                   )}
                   <div className="message-text">
@@ -345,9 +372,13 @@ export default function ChatRoom({ chatUser, setChatUser }) {
                           onError={() => handleImageError('seen_' + msg.id, chatUser.photoURL)}
                         />
                       ) : (
-                        <div className="seen-avatar-initials">
-                          {getInitials(chatUser.displayName)}
-                        </div>
+                        <img
+                          src={defaultAvatar}
+                          alt="Seen avatar"
+                          className="seen-avatar"
+                          loading="lazy"
+                          onError={() => handleImageError('seen_' + msg.id, defaultAvatar)}
+                        />
                       )
                     ) : i === lastSentIndex ? (
                       msg.status === 'delivered' ? (

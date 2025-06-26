@@ -167,29 +167,9 @@ export default function UserList({ setChatUser }) {
     return timeB - timeA;
   });
 
-  const getInitials = (name) => name ? name.charAt(0).toUpperCase() : 'A';
-
   const handleImageError = (key, url) => {
     console.log(`Lỗi tải ảnh: ${url} cho ${key}`);
     setImageErrors((prev) => ({ ...prev, [key]: true }));
-  };
-
-  const formatLastSeen = (timestamp) => {
-    if (!timestamp || typeof timestamp.toDate !== 'function') return '';
-    const date = timestamp.toDate();
-    const now = new Date();
-    const diff = now - date;
-    const minutes = Math.floor(diff / 1000 / 60);
-
-    if (minutes < 1) return 'Vừa mới đây';
-    if (minutes < 60) return `${minutes} phút trước`;
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours} giờ trước`;
-    return date.toLocaleDateString('vi-VN', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    });
   };
 
   return (
@@ -205,12 +185,15 @@ export default function UserList({ setChatUser }) {
               onError={() => handleImageError('currentUser', currentUser.photoURL)}
             />
           ) : (
-            <div className="avatar-initials">
-              {getInitials(currentUser.displayName)}
-            </div>
+            <img
+              src={defaultAvatar}
+              alt="Default avatar"
+              className="current-user-avatar"
+              loading="lazy"
+              onError={() => handleImageError('currentUser', defaultAvatar)}
+            />
           )}
           <h3>{currentUser.displayName || 'User'}</h3>
-          <span className="online-status online">Online</span>
         </div>
       )}
       <div className="user-list-title">Conversations</div>
@@ -221,26 +204,28 @@ export default function UserList({ setChatUser }) {
           className="user-item"
           onClick={() => setChatUser(user)}
         >
-          {!imageErrors[`user_${user.id}`] && user.photoURL ? (
-            <img
-              src={user.photoURL}
-              alt={`${user.displayName}'s avatar`}
-              className="user-avatar"
-              loading="lazy"
-              onError={() => handleImageError(`user_${user.id}`, user.photoURL)}
-            />
-          ) : (
-            <div className="avatar-initials">
-              {getInitials(user.displayName)}
-            </div>
-          )}
+          <div className="avatar-container">
+            {!imageErrors[`user_${user.id}`] && user.photoURL ? (
+              <img
+                src={user.photoURL}
+                alt={`${user.displayName}'s avatar`}
+                className="user-avatar"
+                loading="lazy"
+                onError={() => handleImageError(`user_${user.id}`, user.photoURL)}
+              />
+            ) : (
+              <img
+                src={defaultAvatar}
+                alt={`${user.displayName}'s avatar`}
+                className="user-avatar"
+                loading="lazy"
+                onError={() => handleImageError(`user_${user.id}`, defaultAvatar)}
+              />
+            )}
+            <span className={`status-indicator ${user.online ? 'online' : 'offline'}`}></span>
+          </div>
           <div className="user-info">
-            <div className="user-name">
-              {user.displayName || 'Anonymous'}
-              <span className={`online-status ${user.online ? 'online' : 'offline'}`}>
-                {user.online ? 'Online' : `Offline ${formatLastSeen(user.lastSeen)}`}
-              </span>
-            </div>
+            <div className="user-name">{user.displayName || 'Anonymous'}</div>
             {lastMessages[user.id] && (
               <div className="last-message">
                 {lastMessages[user.id].text?.substring(0, 30) + (lastMessages[user.id].text?.length > 30 ? '...' : '')}
