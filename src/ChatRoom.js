@@ -145,19 +145,23 @@ export default function ChatRoom({ chatUser, setChatUser }) {
       });
       setMessages(msgs);
 
-      // Cập nhật trạng thái tin nhắn
       msgs.forEach(async (msg) => {
-        const msgRef = doc(db, 'chats', chatId, 'messages', msg.id);
-        if (msg.senderId !== currentUser.uid && msg.status !== 'seen') {
-          await updateDoc(msgRef, { status: 'seen' });
-        } else if (msg.senderId === currentUser.uid && msg.status === 'sent') {
+      const msgRef = doc(db, 'chats', chatId, 'messages', msg.id);
+
+      if (msg.senderId === currentUser.uid) {
+        if (msg.status === 'sent' && isOnline) {
           await updateDoc(msgRef, { status: 'delivered' });
         }
-      });
+      } else {
+        if (msg.status !== 'seen') {
+          await updateDoc(msgRef, { status: 'seen' });
+        }
+      }
     });
+  });
 
     return () => unsubscribe();
-  }, [chatId, currentUser.uid]);
+  }, [chatId, currentUser.uid, isOnline]);
 
   // Auto scroll to bottom
   useEffect(() => {
