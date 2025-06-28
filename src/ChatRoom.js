@@ -52,18 +52,27 @@ export default function ChatRoom({ chatUser, setChatUser }) {
   const formatLastSeen = (timestamp, online) => {
     if (online) return 'Đang hoạt động';
     if (!timestamp || typeof timestamp.toDate !== 'function') return 'Không rõ lần cuối truy cập';
-    const date = timestamp.toDate();
-    const diff = currentTime - date;
-    const minutes = Math.floor(diff / 1000 / 60);
 
-    if (minutes < 1) return 'Vừa mới truy cập';
-    if (minutes < 60) return `Hoạt động ${minutes} phút trước`;
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `Hoạt động ${hours} giờ trước`;
-    return `Hoạt động ${date.toLocaleDateString('vi-VN', {
+    const lastActiveDate = timestamp.toDate();
+    const diffMs = currentTime - lastActiveDate;
+    const diffSec = Math.floor(diffMs / 1000);
+    const diffMin = Math.floor(diffSec / 60);
+    const diffHr = Math.floor(diffMin / 60);
+    const diffDay = Math.floor(diffHr / 24);
+    const diffWeek = Math.floor(diffDay / 7);
+    const diffMonth = Math.floor(diffDay / 30);
+
+    if (diffSec < 60) return 'Vừa mới truy cập';
+    if (diffMin < 60) return `Hoạt động ${diffMin} phút trước`;
+    if (diffHr < 24) return `Hoạt động ${diffHr} giờ trước`;
+    if (diffDay < 7) return `Hoạt động ${diffDay} ngày trước`;
+    if (diffWeek < 4) return `Hoạt động ${diffWeek} tuần trước`;
+    if (diffMonth < 12) return `Hoạt động ${diffMonth} tháng trước`;
+
+    return `Hoạt động ngày ${lastActiveDate.toLocaleDateString('vi-VN', {
       day: '2-digit',
       month: '2-digit',
-      year: 'numeric',
+      year: 'numeric'
     })}`;
   };
 
